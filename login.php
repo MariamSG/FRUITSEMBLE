@@ -1,39 +1,29 @@
 <?php
-// Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Replace these values with your actual MySQL connection details
-    $servername = "localhost";
-    $username_db = "root";
-    $password_db = "";
-    $dbname = "mydatabase";
+    // Include database connection
+    include("db.php");
 
-    // Create a connection to MySQL
-    $conn = new mysqli($servername, $username_db, $password_db, $dbname);
+    // Get user input
+    $username = $_POST["username"];
+    $password = $_POST["password"];
 
-    // Check the connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    // Check user credentials
+    $sql = "SELECT id, password FROM users WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
 
-    // Get username and password from the form
-    $username = $_POST['username'];
-    $password = $_POST['pswd'];
-
-    // SQL query to check if the username and password match
-    $sql = "SELECT * FROM users WHERE username = '$username' AND pswd = '$password'";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-        // Redirect to homepage if credentials are correct
+    if ($user && password_verify($password, $user["password"])) {
         header("Location: homepage.html");
         exit();
     } else {
-        // Redirect to register page if credentials are incorrect
         header("Location: register.html");
         exit();
     }
 
-    // Close the MySQL connection
+    // Close the connection
+    $stmt->close();
     $conn->close();
 }
-?>
