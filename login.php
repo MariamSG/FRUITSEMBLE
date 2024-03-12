@@ -1,29 +1,51 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Include database connection
-    include("db.php");
+session_start();
+include("db.php");
 
-    // Get user input
-    $username = $_POST["username"];
-    $password = $_POST["password"];
+function validate($data) 
+{
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
 
-    // Check user credentials
-    $sql = "SELECT id, password FROM users WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
+if(isset($_POST['uname']) && isset($_POST['password'])) 
+{
+    $uname = validate($_POST['uname']);
+    $pass = validate($_POST['password']);
 
-    if ($user && password_verify($password, $user["password"])) {
-        header("Location: homepage.html");
-        exit();
-    } else {
-        header("Location: register.html");
+    if(empty($uname) || empty($pass)) 
+    {
+        header("Location: index.php?error=Username and password are required");
         exit();
     }
 
-    // Close the connection
-    $stmt->close();
-    $conn->close();
+    $sql = "SELECT * FROM users WHERE username='$uname' AND password='$pass'";
+    $result = mysqli_query($conn, $sql);
+
+    if (mysqli_num_rows($result) == 1) 
+    {
+        $row = mysqli_fetch_assoc($result);
+        if($row["username"] === $uname && $row['password'] === $pass) 
+        {
+            echo "Logged In!";
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['name'] = $row['name'];
+            $_SESSION['id'] = $row['id'];
+            header("Location: homepage.php");
+            exit();
+        }
+        else
+        {
+            header("Location: index.php");
+            exit();
+        }
+    }
+    else
+    {
+        header("Location: index.php?error=Invalid username or password");
+        exit();
+    }
 }
+?>

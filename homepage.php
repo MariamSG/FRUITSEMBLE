@@ -1,24 +1,42 @@
 <?php
-// Include common header/footer or other content here
-?>
+session_start();
 
-<!DOCTYPE html>
-<html lang="en">
+if (isset($_SESSION['id']) && isset($_SESSION['username'])) 
+{
+    ?>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homepage</title>
-</head>
-
-<body>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>HOME</title>
+        <link rel="stylesheet" href="css/style.css" type="text/css">
+    </head>
+    <body>
     <h1>Welcome to the Homepage!</h1>
 
     <!-- Insert Form -->
     <h2>Insert Data</h2>
     <form action="insert.php" method="POST">
+        <label for="fruitId">Fruit ID:</label>
+        <input type="number" id="fruitId" name="fruitId" required>
         <label for="fruitName">Fruit Name:</label>
         <input type="text" id="fruitName" name="fruitName" required>
+        <label for="fruitFamily">Fruit Family:</label>
+        <input type="text" id="fruitFamily" name="fruitFamily" required>
+        <label for="order">Order:</label>
+        <input type="text" id="order" name="order" required>
+        <label for="genus">Genus:</label>
+        <input type="text" id="genus" name="genus" required>
+        <label for="calories">Calories:</label>
+        <input type="number" id="calories" name="calories" step="0.1" required>
+        <label for="fat">Fat:</label>
+        <input type="number" id="fat" name="fat" step="0.1" required>
+        <label for="sugar">Sugar:</label>
+        <input type="number" id="sugar" name="sugar" step="0.1" required>
+        <label for="carbohydrates">Carbohydrates:</label>
+        <input type="number" id="carbohydrates" name="carbohydrates" step="0.1" required>
+        <label for="protein">Protein:</label>
+        <input type="number" id="protein" name="protein" step="0.1" required>
         <button type="submit">Insert</button>
     </form>
 
@@ -63,6 +81,15 @@
 
     <!-- Add other content as needed -->
 
-</body>
+       <a href="logout.php">Logout</a> 
+    </body>
+    </html>
 
-</html>
+
+    <?php
+}
+else {
+    header("Location: index.php");
+    exit();
+}
+?>
