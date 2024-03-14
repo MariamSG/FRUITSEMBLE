@@ -9,7 +9,7 @@ $(document).ready(function () {
         //     type: $(this).attr('method'),
         //     data: $(this).serialize(),
         //     success: function(response) {
-        //         // Handle the response from the server
+        //         Handle the response from the server
         //     },
         //     error: function(error) {
         //         console.log(error);
