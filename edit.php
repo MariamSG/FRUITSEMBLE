@@ -1,95 +1,166 @@
 <?php
-// Include the database connection file
-include 'db.php';
+session_start();
+include("db.php");
 
-// Check if an ID parameter is provided in the URL
-if (isset($_GET['name'])) {
-    $name = mysqli_real_escape_string($conn, $_GET['name']);  // Escape the parameter
+// Authentication check - Ensure user is logged in
+if (!isset($_SESSION['id'])) {
+    // Redirect to login page if user is not logged in
+    header("Location: index.php");
+    exit();
+}
 
-    // Fetch the existing data for the given name (use quotes around $name)
-    $query = "SELECT * FROM data WHERE name = '$name'";
-    $result = mysqli_query($conn, $query);
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get user ID from session
+    $user_id = $_SESSION['id'];
 
-    if (!$result) {
-        die("Error: " . mysqli_error($conn));
+    // Get values from the HTML form
+    $fruit_id = intval($_POST['id']);
+    $name = $conn->real_escape_string($_POST['name']);
+    $family = $conn->real_escape_string($_POST['family']);
+    $order = $conn->real_escape_string($_POST['order']);
+    $genus = $conn->real_escape_string($_POST['genus']);
+    $calories = floatval($_POST['calories']);
+    $fat = floatval($_POST['fat']);
+    $sugar = floatval($_POST['sugar']);
+    $carbohydrates = floatval($_POST['carbohydrates']);
+    $protein = floatval($_POST['protein']);
+    // File upload handling
+    $imageData = ""; // Initialize image data as empty string
+
+    // Check if an image file is uploaded
+    if (isset($_FILES['image']) && $_FILES['image']['size'] > 0 && $_FILES['image']['error'] === 0) {
+        $image = $_FILES['image'];
+        $imageData = addslashes(file_get_contents($image['tmp_name'])); // Convert image to binary data
+    }
+    // Update data in the database
+    $sql = "UPDATE data SET 
+                name = '$name', 
+                family = '$family', 
+                `order` = '$order', 
+                genus = '$genus', 
+                calories = $calories, 
+                fat = $fat, 
+                sugar = $sugar, 
+                carbohydrates = $carbohydrates, 
+                protein = $protein";
+
+    // Check if a new image is uploaded
+    if ($image['size'] > 0) {
+        $sql .= ", image = '$imageData'";
     }
 
-    // Check if the row with the given name exists
-    if (mysqli_num_rows($result) > 0) {
-        $row = mysqli_fetch_assoc($result);
+    $sql .= " WHERE id = $fruit_id AND user_id = $user_id";
 
-        // Handle the form submission for updating data
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Retrieve and sanitize the updated data
-            $updatedName = mysqli_real_escape_string($conn, $_POST['name']);
-            $updatedFamily = mysqli_real_escape_string($conn, $_POST['family']);
-            $updatedOrder = mysqli_real_escape_string($conn, $_POST['order']);
-            $updatedGenus = mysqli_real_escape_string($conn, $_POST['genus']);
-            $updatedCalories = mysqli_real_escape_string($conn, $_POST['calories']);
-            $updatedFat = mysqli_real_escape_string($conn, $_POST['fat']);
-            $updatedSugar = mysqli_real_escape_string($conn, $_POST['sugar']);
-            $updatedCarbohydrates = mysqli_real_escape_string($conn, $_POST['carbohydrates']);
-            $updatedProtein = mysqli_real_escape_string($conn, $_POST['protein']);
-
-            // Update the row in the database
-            $updateQuery = "UPDATE data SET 
-            name = '$updatedName', 
-            family = '$updatedFamily', 
-            `order` = '$updatedOrder',  -- Use backticks for order as it's a reserved keyword
-            genus = '$updatedGenus', 
-            calories = '$updatedCalories', 
-            fat = '$updatedFat', 
-            sugar = '$updatedSugar', 
-            carbohydrates = '$updatedCarbohydrates', 
-            protein = '$updatedProtein' 
-            WHERE name = '$name'";  // Use quotes around $name
-            $updateResult = mysqli_query($conn, $updateQuery);
-
-            if ($updateResult) {
-                // Redirect to homepage or display a success message
-                header("Location: homepage.php");
-                exit();
-            } else {
-                die("Error updating data: " . mysqli_error($conn));
-            }
-        }
-
-        // Display the form for editing data
-        ?>
-        <!DOCTYPE html>
-        <html lang="en">
-
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Edit Fruit - <?php echo $row['name']; ?></title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-            <!-- Add your custom styles if needed -->
-        </head>
-
-        <body>
-            <div class="container mt-5">
-                <h2>Edit Fruit - <?php echo $row['name']; ?></h2>
-                <form action="" method="post">  <!-- Remove "edit.php" from the action -->
-                    <!-- Add your input fields for editing data -->
-                    <div class="mb-3">
-                        <label for="id" class="form-label">ID</label>
-                        <input type="number" class="form-control" id="id" name="id" value="<?php echo $row['id']; ?>" required readonly>
-                    </div>
-                    <!-- Add other input fields for editing data -->
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </form>
-            </div>
-        </body>
-
-        </html>
-        <?php
+    if ($conn->query($sql) === FALSE) {
+        echo "Error updating record: " . $conn->error;
     } else {
-        // Handle the case where the name doesn't exist
-        echo "Fruit not found.";
+        echo "Record updated successfully";
+        // Redirect to user_profile.php
+        header("Location: user_profile.php");
+        exit();
     }
+
+    // Close the MySQL connection
+    $conn->close();
 } else {
-    // Handle the case where no name is provided in the URL
-    echo "Invalid request.";
+    // Retrieve fruit details based on ID from the URL parameter
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+        $sql = "SELECT * FROM data WHERE id=$id";
+        $result = $conn->query($sql);
+
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+        } else {
+            echo "No fruit found with the provided ID";
+            exit();
+        }
+    } else {
+        echo "ID parameter is missing";
+        exit();
+    }
 }
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Fruit Details</title>
+</head>
+
+<body>
+    <?php require 'nav_bar.php'; ?>
+    
+    <div class="container">
+        <h1 class="mt-4">Edit Fruit Details</h1>
+
+        <!-- Edit Form -->
+        <div class="mt-4">
+            <form action="edit.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="id" value="<?php echo $row['id']; ?>"> <!-- Hidden input field to pass the fruit ID -->
+                <div class="mb-3">
+                    <label for="name" class="form-label">Fruit Name:</label>
+                    <input type="text" class="form-control" id="name" name="name" value="<?php echo $row['name']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="family" class="form-label">Family:</label>
+                    <input type="text" class="form-control" id="family" name="family" value="<?php echo $row['family']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="order" class="form-label">Order:</label>
+                    <input type="text" class="form-control" id="order" name="order" value="<?php echo $row['order']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="genus" class="form-label">Genus:</label>
+                    <input type="text" class="form-control" id="genus" name="genus" value="<?php echo $row['genus']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="calories" class="form-label">Calories:</label>
+                    <input type="number" step="0.1" class="form-control" id="calories" name="calories" value="<?php echo $row['calories']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="fat" class="form-label">Fat:</label>
+                    <input type="number" step="0.1" class="form-control" id="fat" name="fat" value="<?php echo $row['fat']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="sugar" class="form-label">Sugar:</label>
+                    <input type="number" step="0.1" class="form-control" id="sugar" name="sugar" value="<?php echo $row['sugar']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="carbohydrates" class="form-label">Carbohydrates:</label>
+                    <input type="number" step="0.1" class="form-control" id="carbohydrates" name="carbohydrates" value="<?php echo $row['carbohydrates']; ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="protein" class="form-label">Protein:</label>
+                    <input type="number" step="0.1" class="form-control" id="protein" name="protein" value="<?php echo $row['protein']; ?>" required>
+                </div>
+
+                <div>
+                    <label for="image">Image:</label>
+                    <input type="file" id="image" name="image" accept="image/*">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+    <footer class="footer mt-auto py-3 bg-light">
+    <div class="container text-center">
+        <span class="text-muted">&copy; <?php echo date("Y"); ?> Fruitsemble. All rights reserved.</span>
+    </div>
+    </footer>
+</body>
+
+</html>

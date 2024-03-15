@@ -103,8 +103,8 @@ $totalPages = ceil($totalItems / $itemsPerPage);
             echo '<p>Carbohydrates: ' . $row['carbohydrates'] . '</p>';
             echo '<p>Protein: ' . $row['protein'] . '</p>';
             // Add Edit and Delete buttons with Font Awesome icons
-            echo '<a href="edit.php?id=' . $row['id'] . '" class="btn btn-warning btn-edit"><i class="fas fa-edit"></i></a>';
-            echo '<a href="delete.php?id=' . $row['id'] . '" class="btn btn-danger btn-delete"><i class="fas fa-trash-alt"></i></a>';
+            //echo '<a href="edit.php?id=' . $row['id'] . '" class="btn btn-warning btn-edit"><i class="fas fa-edit"></i></a>';
+            //echo '<a href="delete.php?id=' . $row['id'] . '" class="btn btn-danger btn-delete"><i class="fas fa-trash-alt"></i></a>';
             echo '</div>';
             echo '</div>';
         }

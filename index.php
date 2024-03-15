@@ -1,12 +1,11 @@
 <?php
-$showError = false;
+session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     include 'db.php';
 
     $username = $_POST["username"];
     $password = $_POST["password"];
-    $entrepreneurType = $_POST["signIn"]; 
 	// Hash the password
 	$hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
@@ -16,29 +15,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result) {
         $numRows = mysqli_num_rows($result);
-
+    
         if ($numRows == 1) {
             $row = mysqli_fetch_assoc($result);
             if (password_verify($password, $row['password'])) {
-                session_start();
-                $_SESSION['loggedin'] = true;
-                $_SESSION['username'] = $username;
-
-                // Debugging statement
-                echo "Redirecting...";
-
-                // Redirect after setting session variables
+                
+                $_SESSION['id'] = $row['id'];
+                $_SESSION['username'] = $row['username'];
+    
+                // Redirect to homepage
                 header("location: homepage.php");
                 exit();
             } else {
-                $showError = "Invalid Password";
+                echo "Invalid Password";
             }
         } else {
-            $showError = "Invalid Username";
+            echo "Invalid Username";
         }
     } else {
         die("Error: " . mysqli_error($conn));
-    }
+    }    
 }
 ?>
 <!-- ... rest of the HTML code ... -->
@@ -56,17 +52,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 
 <body>
-    <?php
-    if ($showError) {
-        echo
-        '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Error!</strong>' . $showError . '
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>';
-    }
-    ?>
 
     <section class="vh-100 bg-image" style="background-image: url('https://mdbcdn.b-cdn.net/img/Photos/new-templates/search-box/img4.webp');">
         <div class="mask d-flex align-items-center h-100 gradient-custom-3">
